@@ -11,6 +11,8 @@ import {
 
 import Status from "./components/Status";
 import MessageList from "./components/MessageList";
+import Toolbar from "./components/Toolbar";
+import ImageGrid from "./components/ImageGrid";
 import {
   createImageMessage,
   createLocationMessage,
@@ -28,7 +30,8 @@ export default class App extends React.Component {
         longitude: -122.4324
       })
     ],
-    fullscreenImageId: null
+    fullscreenImageId: null,
+    isInputFocused: false
   };
 
   componentWillMount() {
@@ -49,6 +52,35 @@ export default class App extends React.Component {
 
   componentWillUnmount() {
     this.subscription.remove();
+  }
+
+  handlePressToolbarCamera = () => {};
+
+  handlePressToolbarLocation = () => {
+    const { messages } = this.state;
+
+    navigator.geolocation.getCurrentPosition((position) => {
+      const { coords: { latitude, longitude } } = position;
+
+      this.setState({
+        messages: [
+          createLocationMessage({ latitude, longitude }),
+          ... messages
+        ]
+      });
+    });
+  };
+
+  handleChangeFocus = (isFocused) => {
+    this.setState({ isInputFocused: isFocused });
+  }
+
+  handleSubmit = (text) => {
+    const { messages } = this.state;
+
+    this.setState({
+      messages: [ createTextMessage(text), ...messages ]
+    })
   }
 
   dismissFullScreenImage = () => {
@@ -80,7 +112,10 @@ export default class App extends React.Component {
         );
         break;
       case "image":
-        this.setState({ fullscreenImageId: id });
+        this.setState({
+          fullscreenImageId: id,
+          isInputFocused: false
+        });
         break;
       default:
         break;
@@ -101,11 +136,23 @@ export default class App extends React.Component {
   }
 
   renderInputMethodEditor() {
-    return <View style={styles.inputMethodEditor} />;
+    return <View style={styles.inputMethodEditor}>
+      <ImageGrid />
+    </View>;
   }
 
   renderToolBar() {
-    return <View style={styles.toolbar} />;
+    const { isInputFocused } = this.state;
+
+    return <View style={styles.toolbar}>
+      <Toolbar
+        isFocused={isInputFocused}
+        onSubmit={this.handleSubmit}
+        onChangeFocus={this.handleChangeFocus}
+        onPressCamera={this.handlePressToolbarCamera}
+        onPressLocation={this.handlePressToolbarLocation}
+      />
+    </View>;
   }
 
   renderFullscreenImage = () => {
