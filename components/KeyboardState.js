@@ -27,51 +27,87 @@ export default class KeyboardState extends React.Component {
       keyboardWillHide: false,
       keyboardAnimationDuration: INITIAL_ANIMATION_DURATION
     };
+  }
 
-    componentWillMount() {
-      if (Platform.OS === "ios") {
-        this.subscriptions = [
-          Keyboard.addListener("keyboardWillShow", this.keyboardWillShow),
-          Keyboard.addListener("keyboardWillHide", this.keyboardWillHide),
-          Keyboard.addListener("keyboardDidShow", this.keyboardDidShow),
-          Keyboard.addListener("keyboardDidHide", this.keyboardDidHide)
-        ];
-      } else {
-        this.subscriptions = [
-          Keyboard.addListener("keyboardDidShow", this.keyboardDidShow),
-          Keyboard.addListener("keyboardDidHide", this.keyboardDidHide)
-        ];
-      }
+  componentWillMount() {
+    if (Platform.OS === "ios") {
+      this.subscriptions = [
+        Keyboard.addListener("keyboardWillShow", this.keyboardWillShow),
+        Keyboard.addListener("keyboardWillHide", this.keyboardWillHide),
+        Keyboard.addListener("keyboardDidShow", this.keyboardDidShow),
+        Keyboard.addListener("keyboardDidHide", this.keyboardDidHide)
+      ];
+    } else {
+      this.subscriptions = [
+        Keyboard.addListener("keyboardDidShow", this.keyboardDidShow),
+        Keyboard.addListener("keyboardDidHide", this.keyboardDidHide)
+      ];
     }
+  }
 
-    componentWillUnmount() {
-      this.subscriptions.forEach((subscription) => subscription.remove());
-    }
+  componentWillUnmount() {
+    this.subscriptions.forEach((subscription) => subscription.remove());
+  }
 
-    keyboardWillShow = (event) => {
-      this.setState({ keyboardWillShow: true });
-      this.measure(event);
-    }
+  keyboardWillShow = (event) => {
+    this.setState({ keyboardWillShow: true });
+    this.measure(event);
+  }
 
-    keyboardDidShow = () => {
-      this.setState({
-        keyboardWillShow: false,
-        keyboardVisible: true
-      });
-      // Measure here for Android because it doesn't support will show/hide
-      this.measure(event);
-    }
+  keyboardDidShow = (event) => {
+    this.setState({
+      keyboardWillShow: false,
+      keyboardVisible: true
+    });
+    // Measure here for Android because it doesn't support will show/hide
+    this.measure(event);
+  }
 
-    keyboardWillHide = (event) => {
-      this.setState({ keyboardWillHide: true });
-      this.measure(event);
-    }
+  keyboardWillHide = (event) => {
+    this.setState({ keyboardWillHide: true });
+    this.measure(event);
+  }
 
-    keyboardDidHide = () => {
-      this.setState({
-        keyboardWillHide: false,
-        keyboardVisible: false
-      });
-    }
+  keyboardDidHide = () => {
+    this.setState({
+      keyboardWillHide: false,
+      keyboardVisible: false
+    });
+  }
+
+  measure = (event) => {
+    const { layout } = this.props;
+    const {
+      endCoordinates: { height, screenY },
+      duration = INITIAL_ANIMATION_DURATION
+    } = event;
+
+    this.setState({
+      contentHeight: screenY - layout.y,
+      keyboardHeight: height,
+      keyboardAnimationDuration: duration
+    });
+  }
+
+  render() {
+    const { children, layout } = this.props;
+    const {
+      contentHeight,
+      keyboardHeight,
+      keyboardVisible,
+      keyboardWillHide,
+      keyboardWillShow,
+      keyboardAnimationDuration
+    } = this.state;
+
+    return children({
+      containerHeight: layout.height,
+      contentHeight,
+      keyboardHeight,
+      keyboardVisible,
+      keyboardWillHide,
+      keyboardWillShow,
+      keyboardAnimationDuration
+    });
   }
 }

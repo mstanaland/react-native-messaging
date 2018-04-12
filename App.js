@@ -13,6 +13,9 @@ import Status from "./components/Status";
 import MessageList from "./components/MessageList";
 import Toolbar from "./components/Toolbar";
 import ImageGrid from "./components/ImageGrid";
+import KeyboardState from "./components/KeyboardState";
+import MeasureLayout from "./components/MeasureLayout";
+import MessagingContainer, { INPUT_METHOD } from "./components/MessagingContainer";
 import {
   createImageMessage,
   createLocationMessage,
@@ -31,7 +34,8 @@ export default class App extends React.Component {
       })
     ],
     fullscreenImageId: null,
-    isInputFocused: false
+    isInputFocused: false,
+    inputMethod: INPUT_METHOD.NONE
   };
 
   componentWillMount() {
@@ -54,7 +58,16 @@ export default class App extends React.Component {
     this.subscription.remove();
   }
 
-  handlePressToolbarCamera = () => {};
+  handleChangeInputMethod = (inputMethod) => {
+    this.setState({ inputMethod });
+  }
+
+  handlePressToolbarCamera = () => {
+    this.setState({
+      isInputFocused: false,
+      inputMethod: INPUT_METHOD.CUSTOM
+    });
+  };
 
   handlePressToolbarLocation = () => {
     const { messages } = this.state;
@@ -183,12 +196,23 @@ export default class App extends React.Component {
   };
 
   render() {
+    const { inputMethod } = this.state;
+
     return (
       <View style={styles.container}>
         <Status />
-        {this.renderMessageList()}
-        {this.renderToolBar()}
-        {this.renderInputMethodEditor()}
+        <MeasureLayout>
+          {layout => (
+            <KeyboardState layout={layout}>
+              {keyboardInfo => (
+                <MessagingContainer {...keyboardInfo} inputMethod={inputMethod} onChangeInputMethod={this.handleChangeInputMethod} renderInputMethodEditor={this.renderInputMethodEditor}>
+                  {this.renderMessageList()}
+                  {this.renderToolBar()}
+                </MessagingContainer>
+              )}
+            </KeyboardState>
+          )}
+        </MeasureLayout>
         {this.renderFullscreenImage()}
       </View>
     );
